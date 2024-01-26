@@ -15,12 +15,17 @@ class Graph {
 	}
 
 	public addEdge(source: GraphNode, destination: GraphNode) {
-		if (source == destination || (source.neighbors[destination.data] == destination && destination.neighbors[source.data] == source)) {
-			return
+		if (this.checkNeighbors(source, destination)) {
+			return;
 		}
+
 		source.addNeighbor(destination);
 		destination.addNeighbor(source);
 		this.numEdges++;
+	}
+
+	public checkNeighbors(source: GraphNode, destination: GraphNode) {
+		return (source == destination) || (source.neighbors[destination.data] == destination) && (destination.neighbors[source.data] == source)
 	}
 
 	public getNodeCount() {

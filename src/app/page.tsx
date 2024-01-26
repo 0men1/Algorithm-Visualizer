@@ -6,6 +6,7 @@ import Graph from "@/scripts/Graph"
 import GraphNode from "@/scripts/GraphNode";
 import React, {useState, useEffect} from "react";
 import Draggable from 'react-draggable'
+import edge from "./components/Edge";
 
 
 
@@ -25,6 +26,10 @@ export default function Home() {
     const [edgeMode, setEdgeMode] = useState(false);
     const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
 
+
+    /**
+     * Addes nodes to myGraph which is created as a state above. First maps every node from the old graph to new graph and then adds the new node.
+     */
     function handleAddingNodes() {
         const newGraph = new Graph();
         // Copy the existing nodes to the new graph (or implement a method in your Graph class to handle this)
@@ -39,6 +44,9 @@ export default function Home() {
     }
 
 
+    /**
+     * Removes nodes form myGraph which is created as a state. First maps every node in the old graph to a new graph except for the node to be removed.
+     */
     function handleRemovingNodes() {
         if (nodeCount > 0) {
             const newGraph = new Graph();
@@ -54,7 +62,13 @@ export default function Home() {
     }
 
 
-    // Handle node positions
+    /**
+     * Sets the node positions as they are being dragged.
+     * @param e
+     * @param data
+     * @param nodeID
+     */
+    // TODO: Do not let it escape the vertex box
     function onDragNode(e: any, data: any, nodeID: any) {
         setNodePosition(prevNodes => ({
             ...prevNodes,
@@ -62,6 +76,10 @@ export default function Home() {
         }))
     }
 
+
+    /**
+     * Get a random x,y coordinates scaled off of the size of the window
+     */
     function getRandNodePosition() {
         const maxWidth = window.innerWidth - 150;
         const maxHeight = window.innerHeight - 400;
@@ -71,7 +89,11 @@ export default function Home() {
     }
 
 
-    // ----------------------------------------------------------------Edge Handle --------------------------------------
+    /**
+     * Given 2 values of nodes (The dataValue isnide of the nodeobject) Find the positions of the nodes and connect them with an edge
+     * @param node1
+     * @param node2
+     */
     function printEdge(node1: any, node2: any) {
         if (nodePosition[node1] == undefined || nodePosition[node2] == undefined) {
             return;
@@ -83,39 +105,57 @@ export default function Home() {
     }
 
 
-    // Edge button is pressed
+    /**
+     * Toggles setEdgeMode so the user can know that they did and then they can start adding edges between pairs of nodes
+     */
     function toggleEdgeMode() {
         setEdgeMode(!edgeMode);
-        setSelectedNodes([]);
-        if (!edgeMode) {
-            // Add instructions for the user here
+    }
+
+
+    /**
+     * Every time a node is selected while edgeMode is true, it will be stored inside of selectedNodes. Once selectedNodes has 2 nodes inside of it, it will add an edge connecting them.
+     * @param nodeID
+     */
+    function selectedNode(nodeID: any) {
+        if (edgeMode) {
+            setSelectedNodes((prevSelected) => {
+                // Adding the newly selected node
+                const newSelected = [...prevSelected, nodeID];
+
+                // Check if two nodes are selected for an edge
+                if (newSelected.length === 2) {
+                    // TODO: Add a check to avoid connecting nodes if they are already connected
+                    myGraph.addEdge(myGraph.graph[newSelected[0]], myGraph.graph[newSelected[1]]);
+                    setEdgeCount(edgeCount + 1);
+
+                    // Clear the selected nodes for the next edge
+                    return [];
+                }
+
+                // Keep the current selection
+                return newSelected;
+            });
+        }
+    }
+
+
+    /**
+     * UseEffect to actively update edgeMode whenever there is a change to it because react states are stupid and weird
+     */
+    useEffect(() => {
+        if (edgeMode) {
+            setSelectedNodes([]);
             setInstructionText("Edge Mode Activated: Please select two nodes to connect.");
         } else {
             setInstructionText("")
         }
-    }
+    }, [edgeMode]);
 
-    function selectedNode(nodeID: any) {
-        if (edgeMode) {
-            const newSelection: any[] = [...selectedNodes];
-            if (newSelection.length < 2) {
-                newSelection.push(nodeID);
 
-                if (newSelection.length === 2) {
-                    // Add edge between newSelection[0] and newSelection[1]
-                    myGraph.addEdge(myGraph.graph[newSelection[0]], myGraph.graph[newSelection[1]]);
-                    setEdgeCount(edgeCount + 1);
-                    setEdgeMode(false); // Exit edge mode after adding an edge
-                    setInstructionText("")
-                    console.log("Added edges and then set edge mode to off");
-                }
-
-                setSelectedNodes(newSelection);
-                console.log("Returning newSelected");
-            }
-        }
-    }
-
+    /**
+     * UseEffect to actively spawn new nodes and give them their random x,y positions that are inside of the window.
+     */
     useEffect(() => {
         // const newNodeId = Object.keys(nodePosition).length
         const newNodeId = myGraph.graph.length;
@@ -130,7 +170,8 @@ export default function Home() {
           {instructionText == ""? <div></div>:
               <div className={`w-full flex bg-white p-4 border-2 border-black justify-center items-center`}>
                   {instructionText}
-              </div>}
+              </div>
+          }
           {<div className={`toolbar bg-white p-10 flex gap-8 items-center justify-center`}>
               <div className="managing-nodes flex flex-col gap-4 items-center justify-center">
                   <div className="flex flex-row gap-4">
