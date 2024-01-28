@@ -6,10 +6,6 @@ import Graph from "@/scripts/Graph"
 import GraphNode from "@/scripts/GraphNode";
 import React, {useState, useEffect} from "react";
 import Draggable from 'react-draggable'
-import edge from "./components/Edge";
-
-
-
 
 export default function Home() {
     // IGNORE
@@ -22,13 +18,14 @@ export default function Home() {
     const [nodePosition, setNodePosition] = useState<{[index: string]: {x: number, y: number}}>({});
     const [instructionText, setInstructionText] = useState("");
 
+
+
     // FOR EDGE ADDITION
     const [edgeMode, setEdgeMode] = useState(false);
     const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
 
-
     /**
-     * Addes nodes to myGraph which is created as a state above. First maps every node from the old graph to new graph and then adds the new node.
+     * Adds nodes to myGraph which is created as a state above. First maps every node from the old graph to new graph and then adds the new node.
      */
     function handleAddingNodes() {
         const newGraph = new Graph();
@@ -90,7 +87,7 @@ export default function Home() {
 
 
     /**
-     * Given 2 values of nodes (The dataValue isnide of the nodeobject) Find the positions of the nodes and connect them with an edge
+     * Given 2 values of nodes (The dataValue inside the node) Find the positions of the nodes and connect them with an edge
      * @param node1
      * @param node2
      */
@@ -106,7 +103,7 @@ export default function Home() {
 
 
     /**
-     * Toggles setEdgeMode so the user can know that they did and then they can start adding edges between pairs of nodes
+     * Toggles setEdgeMode so the user can know that they did, and then they can start adding edges between pairs of nodes
      */
     function toggleEdgeMode() {
         setEdgeMode(!edgeMode);
@@ -114,29 +111,37 @@ export default function Home() {
 
 
     /**
-     * Every time a node is selected while edgeMode is true, it will be stored inside of selectedNodes. Once selectedNodes has 2 nodes inside of it, it will add an edge connecting them.
+     * Every time a node is selected while edgeMode is true, it will be stored inside selectedNodes. Once selectedNodes has 2 nodes inside of it, it will add an edge connecting them.
      * @param nodeID
      */
-    function selectedNode(nodeID: any) {
+    function selectNode(nodeID: any) {
         if (edgeMode) {
-            setSelectedNodes((prevSelected) => {
-                // Adding the newly selected node
-                const newSelected = [...prevSelected, nodeID];
+            let newSelection: any = [...selectedNodes, nodeID]
 
-                // Check if two nodes are selected for an edge
-                if (newSelected.length === 2) {
-                    // TODO: Add a check to avoid connecting nodes if they are already connected
-                    myGraph.addEdge(myGraph.graph[newSelected[0]], myGraph.graph[newSelected[1]]);
-                    setEdgeCount(edgeCount + 1);
+            setInstructionText("Edge Mode Activated: Please select two nodes to connect.");
 
-                    // Clear the selected nodes for the next edge
-                    return [];
+            // Once two nodes are selected by user
+            if (newSelection.length === 2) {
+                if (myGraph.checkNeighbors(myGraph.graph[newSelection[0]], myGraph.graph[newSelection[1]])){
+                    setInstructionText("They are already connected")
+                    newSelection = [];
+                    setSelectedNodes(newSelection);
+                    return;
                 }
 
-                // Keep the current selection
-                return newSelected;
-            });
+                createEdge(newSelection[0], newSelection[1])
+
+                newSelection = [];
+            }
+            setSelectedNodes(newSelection);
         }
+    }
+
+
+
+    function createEdge(node1: any, node2: any) {
+        myGraph.addEdge(myGraph.graph[node1], myGraph.graph[node2])
+        setEdgeCount(edgeCount+1);
     }
 
 
@@ -154,7 +159,7 @@ export default function Home() {
 
 
     /**
-     * UseEffect to actively spawn new nodes and give them their random x,y positions that are inside of the window.
+     * UseEffect to actively spawn new nodes and give them their random x,y positions that are inside the window.
      */
     useEffect(() => {
         // const newNodeId = Object.keys(nodePosition).length
@@ -165,7 +170,7 @@ export default function Home() {
     }, [myGraph.graph]);
 
 
-  return (
+    return (
       <main className="mainscreen min-h-screen">
           {instructionText == ""? <div></div>:
               <div className={`w-full flex bg-white p-4 border-2 border-black justify-center items-center`}>
@@ -198,7 +203,7 @@ export default function Home() {
                           key={key.data}
                           defaultPosition={nodePosition[key.data]}>
 
-                          <div onClick={() => {if (edgeMode) selectedNode(key.data)}} ref={nodeRef}>
+                          <div onClick={() => {if (edgeMode) selectNode(key.data)}} ref={nodeRef}>
                               <Node  DataValue={key.data}/>
                           </div>
                       </Draggable>
@@ -207,7 +212,8 @@ export default function Home() {
 
               {
                   myGraph.graph.map((key) =>
-                    key.neighbors.map((node_) => {
+                      //@ts-ignore
+                          [...key.neighbors].map((node_) => {
                          return(printEdge(key.data, node_.data))
                     })
                   )
@@ -217,3 +223,22 @@ export default function Home() {
       </main>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+//TODO:
+/**
+ * 1. When deleting a node the edges stay printed, and it causes an error because the node is removed but the edges are still drawn so the data is messed up
+ * 2. Issues with the edge count. It draws 2 edges per 1 connection
+ * 3. Figure out how to do unit/integration testing.
+ */

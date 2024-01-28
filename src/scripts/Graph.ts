@@ -1,4 +1,5 @@
 import GraphNode from "./GraphNode"
+import {spec} from "node:test/reporters";
 
 
 class Graph {
@@ -25,7 +26,7 @@ class Graph {
 	}
 
 	public checkNeighbors(source: GraphNode, destination: GraphNode) {
-		return (source == destination) || (source.neighbors[destination.data] == destination) && (destination.neighbors[source.data] == source)
+		return (source == destination) || (source.neighbors.has(destination) || destination.neighbors.has(destination))
 	}
 
 	public getNodeCount() {
@@ -37,7 +38,16 @@ class Graph {
 	}
 
 	public removeNode() {
-		this.graph.pop();
+		const removed_node = this.graph.pop()
+
+		if (removed_node?.neighbors.size != undefined) {
+			this.numEdges = this.numEdges - removed_node?.neighbors.size;
+
+			removed_node?.neighbors.forEach((elem) => {
+				elem.neighbors.delete(removed_node)
+			})
+			removed_node?.neighbors.clear()
+		}
 	}
 
 

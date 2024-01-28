@@ -1,15 +1,17 @@
+import Graph from "@/scripts/Graph";
 
 class GraphNode {
     public data: any;
-    public neighbors: GraphNode[];
+    public neighbors: Set<GraphNode>;
+
 
     public constructor(data_: any) {
        this.data = data_;
-       this.neighbors = []
+       this.neighbors = new Set<GraphNode>();
     }
 
     public addNeighbor(graphnode_: GraphNode) {
-        this.neighbors.push(graphnode_);
+        this.neighbors.add(graphnode_);
     }
 }
 
