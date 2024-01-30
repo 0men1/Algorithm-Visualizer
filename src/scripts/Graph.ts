@@ -48,6 +48,8 @@ class Graph {
 			})
 			removed_node?.neighbors.clear()
 		}
+
+		return removed_node
 	}
 
 

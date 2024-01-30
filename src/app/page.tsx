@@ -6,6 +6,8 @@ import Graph from "@/scripts/Graph"
 import GraphNode from "@/scripts/GraphNode";
 import React, {useState, useEffect} from "react";
 import Draggable from 'react-draggable'
+import {updateInitialEnv} from "@next/env";
+import {bool} from "prop-types";
 
 export default function Home() {
     // IGNORE
@@ -17,6 +19,14 @@ export default function Home() {
     const [myGraph, setMyGraph] = useState(new Graph()); // Store the graph in the state
     const [nodePosition, setNodePosition] = useState<{[index: string]: {x: number, y: number}}>({});
     const [instructionText, setInstructionText] = useState("");
+
+    const [debug, setDebug] = useState<boolean>(false)
+
+    function handleDebug() {
+        setDebug(!debug)
+        setInstructionText("Debug Toggled")
+    }
+
 
 
 
@@ -46,15 +56,17 @@ export default function Home() {
      */
     function handleRemovingNodes() {
         if (nodeCount > 0) {
-            const newGraph = new Graph();
-            // Copy the existing nodes to the new graph (or implement a method in your Graph class to handle this)
-            myGraph.graph.map(( key) => newGraph.addNode(key));
+            const newGraph = new Graph();/* Copy the existing nodes to the new graph (or implement a method in your Graph class to handle this) */myGraph.graph.map(( key) => newGraph.addNode(key));
+
+            setMyGraph(newGraph)
+            setNodeCount(nodeCount - 1); // Decrement the node count
+
+            const removed_node = newGraph.removeNode();
 
             newGraph.numEdges = myGraph.numEdges;
 
-            newGraph.removeNode();
-            setMyGraph(newGraph)
-            setNodeCount(nodeCount - 1); // Decrement the node count
+            const {[removed_node?.data]: _, ...updatedPositions} = nodePosition
+            setNodePosition(updatedPositions)
         }
     }
 
@@ -160,13 +172,26 @@ export default function Home() {
      * UseEffect to actively spawn new nodes and give them their random x,y positions that are inside the window.
      */
     useEffect(() => {
-        // const newNodeId = Object.keys(nodePosition).length
+        const nodePosSize = Object.keys(nodePosition).length
         const newNodeId = myGraph.graph.length;
-        const newNode = {[newNodeId]: getRandNodePosition()}
+
+        // if (nodePosSize > newNodeId) {
+        //     const {[nodePosSize]: _, ...rest} = nodePosition;
+        //     setNodePosition(rest);
+        // }
+
+
+        const newNode = {[nodeCount]: getRandNodePosition()}
         setNodePosition({...nodePosition, ...newNode})
 
-    }, [myGraph.graph]);
 
+        if (debug) {
+            console.log("Node Count: ", nodeCount);
+            console.log(myGraph.graph.length)
+            console.log(nodePosition)
+        }
+
+    }, [myGraph.graph]);
 
     return (
         <main className="mainscreen min-h-screen">
@@ -178,6 +203,9 @@ export default function Home() {
             {<div className={`toolbar bg-white p-10 flex gap-8 items-center justify-center`}>
                 <div className="managing-nodes flex flex-col gap-4 items-center justify-center">
                     <div className="flex flex-row gap-4">
+
+                        <button onClick={handleDebug} className={"px-4 py-2 bg-gray-500 rounded-md"}>🛠️</button>
+
                         <button onClick={handleAddingNodes} className="px-4 py-2 bg-gray-500 rounded-md">+</button>
                         <button onClick={handleRemovingNodes} className="px-4 py-2 bg-gray-500 rounded-md">-</button>
                         <button onClick={toggleEdgeMode} className="px-4 py-2 bg-gray-500 rounded-md"> ⇄</button>
