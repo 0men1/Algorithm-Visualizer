@@ -6,8 +6,6 @@ import Graph from "@/scripts/Graph"
 import GraphNode from "@/scripts/GraphNode";
 import React, {useState, useEffect} from "react";
 import Draggable from 'react-draggable'
-import {updateInitialEnv} from "@next/env";
-import {bool} from "prop-types";
 
 export default function Home() {
     // IGNORE
