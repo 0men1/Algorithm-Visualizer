@@ -54,17 +54,16 @@ export default function Home() {
      */
     function handleRemovingNodes() {
         if (nodeCount > 0) {
-            const newGraph = new Graph();/* Copy the existing nodes to the new graph (or implement a method in your Graph class to handle this) */myGraph.graph.map(( key) => newGraph.addNode(key));
+            const removed_node = myGraph.removeNode();
 
-            setMyGraph(newGraph)
-            setNodeCount(nodeCount - 1); // Decrement the node count
-
-            const removed_node = newGraph.removeNode();
-
-            newGraph.numEdges = myGraph.numEdges;
 
             const {[removed_node?.data]: _, ...updatedPositions} = nodePosition
+
+            setMyGraph(myGraph);
+            setNodeCount(myGraph.numNodes); // Decrement the node count
             setNodePosition(updatedPositions)
+
+            console.log(JSON.stringify(nodePosition, null, 2))
         }
     }
 

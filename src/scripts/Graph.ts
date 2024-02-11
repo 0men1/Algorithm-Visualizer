@@ -1,18 +1,20 @@
 import GraphNode from "./GraphNode"
-import {spec} from "node:test/reporters";
 
 
 class Graph {
 	public graph: GraphNode[]; // Map of vertices and edges
 	public numEdges: number;
+	public numNodes: number;
 
 	public constructor() {
 		this.graph = [];
 		this.numEdges = 0;
+		this.numNodes = 0;
 	}
 
 	public addNode(node_: GraphNode) {
 		this.graph.push(node_);
+		this.numNodes++;
 	}
 
 	public addEdge(source: GraphNode, destination: GraphNode) {
@@ -40,7 +42,7 @@ class Graph {
 	public removeNode() {
 		const removed_node = this.graph.pop()
 
-		if (removed_node?.neighbors.size != undefined) {
+		if (removed_node?.neighbors.size != undefined && removed_node.neighbors.size > 0) {
 			this.numEdges = this.numEdges - removed_node?.neighbors.size;
 
 			removed_node?.neighbors.forEach((elem) => {
@@ -48,6 +50,8 @@ class Graph {
 			})
 			removed_node?.neighbors.clear()
 		}
+
+		this.numNodes--;
 
 		return removed_node
 	}
