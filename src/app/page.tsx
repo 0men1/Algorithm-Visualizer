@@ -8,6 +8,7 @@ import React, {useRef, useState, useEffect} from "react";
 import Draggable from 'react-draggable'
 import getRandNodePosition from '@/utility/utility'
 import graphNode from "@/scripts/GraphNode";
+import Queue from "yocto-queue";
 
 
 export default function Home() {
@@ -21,12 +22,10 @@ export default function Home() {
 
 
     // FOR ALGORITHMS
-    const [DFS_, setDFS] = useState(false);
-    const [BFS_, setBFS] = useState(false);
-    const [Dijkstra_, setDijkstra] = useState(false);
+    const [chosenAlgo, setChosenAlgo] = useState("")
     const visitedRef = useRef(new Array(myGraph.numNodes).fill(false));
     const [visitedState, setVisitedState] = useState<boolean[]>(new Array(myGraph.numNodes).fill(false))
-    const algorithms = ["BFS", "DFS", "Dijkstra"]
+    const algorithms = ["BFS", "DFS"]
 
 
     /* FOR EDGE MANIPULATION */const [edgeMode, setEdgeMode] = useState(false);const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
@@ -45,45 +44,6 @@ export default function Home() {
         setNodeCount(nodeCount + 1); // Increment the node count
     }
 
-
-    async function DFS(start: graphNode) {
-
-        const visited = visitedRef.current;
-        visited[start.data] = true;
-
-
-        setVisitedState([...visited])
-
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
-        for (const vertex of myGraph.graph[start.data].neighbors) {
-            if (!visited[vertex.data]) {
-                await DFS(vertex);
-            }
-        }
-    }
-
-    function resetVisited() {
-        const resetArray = new Array(myGraph.numNodes).fill(false);
-        visitedRef.current = resetArray;
-        setVisitedState(resetArray);
-    }
-    function handleAlgo(event: any) {
-        event.preventDefault();
-
-        if (event.target.value == "DFS") {
-            DFS(myGraph.graph[0]).then(r => {
-                console.log("RESET ARRAY");
-                resetVisited();
-            })
-        }
-    }
-
-    useEffect(() => {
-        console.log(visitedRef)
-    }, [visitedRef]);
-
-
     /**
      * Removes nodes form myGraph which is created as a state. First maps every node in the old graph to a new graph except for the node to be removed.
      */
@@ -98,6 +58,85 @@ export default function Home() {
         }
     }
 
+    async function DFS(start: graphNode) {
+
+        const visited = visitedRef.current;
+        visited[start.data] = true;
+
+        setVisitedState([...visited])
+
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        for (const vertex of myGraph.graph[start.data].neighbors) {
+            if (!visited[vertex.data]) {
+                await DFS(vertex);
+            }
+        }
+    }
+
+
+    async function BFS(start: graphNode) {
+        let queue = new Queue<graphNode>();
+
+        const visited = visitedRef.current;
+        visited[start.data] = true;
+        setVisitedState([...visited]);
+
+        queue.enqueue(start);
+
+        while(queue.size != 0) {
+            let node = queue.dequeue()
+            console.log(node?.data);
+
+            for (const node_ of myGraph.graph[node?.data].neighbors) {
+                if (!visited[node_.data]) {
+                    await new Promise(resolve => setTimeout(resolve, 500))
+
+                    const visited = visitedRef.current;
+                    visited[node_.data] = true;
+                    setVisitedState([...visited]);
+
+                    await new Promise(resolve => setTimeout(resolve, 1000))
+
+                    queue.enqueue(node_)
+                }
+            }
+        }
+    }
+
+    function resetVisited() {
+        const resetArray = new Array(myGraph.numNodes).fill(false);
+        visitedRef.current = resetArray;
+        setVisitedState(resetArray);
+    }
+
+    function handleAlgoChange(event: any) {
+        event.preventDefault();
+        setChosenAlgo(event.target.value)
+    }
+
+    async function handleAlgo(event:any) {
+        event?.preventDefault()
+
+        if (chosenAlgo == "DFS") {
+            DFS(myGraph.graph[0]).then(r => {
+                resetVisited();
+            })
+            return;
+        }
+
+        if (chosenAlgo == "BFS") {
+            BFS(myGraph.graph[0]).then(r => {
+                resetVisited();
+            })
+            return;
+        }
+
+        setInstructionText("Choose one >:(");
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        setInstructionText("");
+
+    }
 
     /**
      * Sets the node positions as they are being dragged.
@@ -133,10 +172,6 @@ export default function Home() {
     function toggleEdgeMode() {
         setEdgeMode(!edgeMode);
     }
-
-
-
-
 
     /**
      * Every time a node is selected while edgeMode is true, it will be stored inside selectedNodes. Once selectedNodes has 2 nodes inside of it, it will add an edge connecting them.
@@ -198,7 +233,7 @@ export default function Home() {
                     <div className="flex-col justify-center items-center ">
                         <form className={"flex-col"} onSubmit={handleAlgo}>
                             <h4>Choose an algorithm:</h4>
-                            <select name="Algos" onChange={handleAlgo} id={"Algos"}>
+                            <select name="Algos" onChange={handleAlgoChange} id={"Algos"}>
                                 <option>Choose one dawg</option>
                                 {algorithms.map((algos) => {
                                     return (
@@ -206,7 +241,7 @@ export default function Home() {
                                     )
                                 })}
                             </select>
-                            <button type={"submit"} className={"px-4 py-2 bg-gray-500 rounded-md"}>Go</button>
+                            <button type={"submit"} onSubmit={handleAlgo} className={"px-4 py-2 bg-gray-500 rounded-md"}>Go</button>
                         </form>
                     </div>
                 }
@@ -257,23 +292,6 @@ export default function Home() {
                 }
         </div>
 
-</main>
-)
+    </main>
+    )
 }
-
-
-//TODO:
-/**
- * Implement DFS algorithm
- *
- * Make a separate component for each algorithm? How would I change the state of each node though?
- *
- * Make component (Call it DFS)
- * Pass in the graph.
- * In those components have their used data structures (queues, stacks, array) whatever
- * Wait 2 sec every time a node is referenced and it make it a nice color
- * When an algorithm starts, change the colors of all nodes to
- * yellow (not visited)
- * green (visited)
- * red (failed to visit)
- */
