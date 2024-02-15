@@ -1,5 +1,5 @@
 import GraphNode from "./GraphNode"
-
+import setVisited from "../app/page"
 
 class Graph {
 	public graph: GraphNode[]; // Map of vertices and edges
@@ -41,7 +41,6 @@ class Graph {
 
 	public removeNode() {
 		const removed_node = this.graph.pop()
-
 		if (removed_node?.neighbors.size != undefined && removed_node.neighbors.size > 0) {
 			this.numEdges = this.numEdges - removed_node?.neighbors.size;
 
@@ -50,11 +49,10 @@ class Graph {
 			})
 			removed_node?.neighbors.clear()
 		}
-
 		this.numNodes--;
-
 		return removed_node
 	}
+
 
 
 }

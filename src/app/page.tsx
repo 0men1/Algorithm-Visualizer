@@ -6,17 +6,30 @@ import Graph from "@/scripts/Graph"
 import GraphNode from "@/scripts/GraphNode";
 import React, {useState, useEffect} from "react";
 import Draggable from 'react-draggable'
+import getRandNodePosition from '@/utility/utility'
+import graphNode from "@/scripts/GraphNode";
+
 
 export default function Home() {
+
+    // FOR NODE MANIPULATION
     const [nodeCount, setNodeCount] = useState(0);
     const [edgeCount, setEdgeCount] = useState(0);
     const [myGraph, setMyGraph] = useState(new Graph()); // Store the graph in the state
     const [nodePosition, setNodePosition] = useState<{[index: string]: {x: number, y: number}}>({});
     const [instructionText, setInstructionText] = useState("");
 
-    // FOR EDGE ADDITION
-    const [edgeMode, setEdgeMode] = useState(false);
-    const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
+
+    // FOR ALGORITHMS
+    const [DFS_, setDFS] = useState(false);
+    const [BFS_, setBFS] = useState(false);
+    const [Dijkstra_, setDijkstra] = useState(false);
+    const [visited, setVisited] = useState<boolean[]>(new Array(myGraph.numNodes).fill(false))
+    const algorithms = ["BFS", "DFS", "Dijkstra"]
+
+
+    /* FOR EDGE MANIPULATION */const [edgeMode, setEdgeMode] = useState(false);const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
+
 
     /**
      * Adds nodes to myGraph which is created as a state above. First maps every node from the old graph to new graph and then adds the new node.
@@ -30,6 +43,43 @@ export default function Home() {
         setMyGraph(myGraph); // Update the state with the new graph
         setNodeCount(nodeCount + 1); // Increment the node count
     }
+
+
+    async function DFS(start: graphNode, visited: boolean[]) {
+
+        const newVisited = [...visited];
+        newVisited[start.data] = true;
+
+        setVisited(newVisited)
+
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        for (const vertex of myGraph.graph[start.data].neighbors) {
+            if (!newVisited[vertex.data]) {
+                await DFS(vertex, newVisited);
+            }
+        }
+    }
+
+    /*
+    ALLOW USER TO CHOOSE START NODE
+     */
+
+
+    function handleAlgo(event: any) {
+        event.preventDefault();
+
+        if (event.target.value == "DFS") {
+            DFS(myGraph.graph[0], visited).then(r => {
+                console.log("RESET ARRAY")
+                setVisited(new Array(myGraph.numNodes).fill(false))
+            })
+        }
+    }
+
+    useEffect(() => {
+        console.log(visited)
+    }, [visited]);
 
 
     /**
@@ -61,19 +111,6 @@ export default function Home() {
         }))
     }
 
-
-    /**
-     * Get a random x,y coordinates scaled off of the size of the window
-     */
-    function getRandNodePosition() {
-        const maxWidth = window.innerWidth - 150;
-        const maxHeight = window.innerHeight - 400;
-        const x = Math.random() * maxWidth;
-        const y = Math.random() * maxHeight;
-        return {x,y}
-    }
-
-
     /**
      * Given 2 values of nodes (The dataValue inside the node) Find the positions of the nodes and connect them with an edge
      * @param node1
@@ -84,7 +121,7 @@ export default function Home() {
             ||  (myGraph.graph[node1] == null || myGraph.graph[node2] == null)) {
             return;
         }
-        return <Edge key={`${node1}-${node2}`} x1={nodePosition[node1]?.x+40} x2={nodePosition[node2]?.x+40} y1={nodePosition[node1]?.y+40} y2={nodePosition[node2]?.y+40}/>
+        return <Edge key={`${node1}${node2}`} x1={nodePosition[node1]?.x+40} x2={nodePosition[node2]?.x+40} y1={nodePosition[node1]?.y+40} y2={nodePosition[node2]?.y+40}/>
     }
 
 
@@ -96,6 +133,9 @@ export default function Home() {
     }
 
 
+
+
+
     /**
      * Every time a node is selected while edgeMode is true, it will be stored inside selectedNodes. Once selectedNodes has 2 nodes inside of it, it will add an edge connecting them.
      * @param nodeID
@@ -103,7 +143,6 @@ export default function Home() {
     function selectNode(nodeID: any) {
         if (edgeMode) {
             let newSelection: any = [...selectedNodes, nodeID]
-
             setInstructionText("Edge Mode Activated: Please select two nodes to connect.");
 
             // Once two nodes are selected by user
@@ -114,7 +153,6 @@ export default function Home() {
                     setSelectedNodes(newSelection);
                     return;
                 }
-
                 createEdge(newSelection[0], newSelection[1])
 
                 newSelection = [];
@@ -153,6 +191,24 @@ export default function Home() {
                 </div>
             }
             {<div className={`toolbar bg-white p-10 flex gap-8 items-center justify-center`}>
+
+                {
+                    <div className="flex-col justify-center items-center ">
+                        <form className={"flex-col"} onSubmit={handleAlgo}>
+                            <h4>Choose an algorithm:</h4>
+                            <select name="Algos" onChange={handleAlgo} id={"Algos"}>
+                                <option>Choose one dawg</option>
+                                {algorithms.map((algos) => {
+                                    return (
+                                        <option value={algos} key={algos}>{algos}</option>
+                                    )
+                                })}
+                            </select>
+                            <button type={"submit"} className={"px-4 py-2 bg-gray-500 rounded-md"}>Go</button>
+                        </form>
+                    </div>
+                }
+
                 <div className="managing-nodes flex flex-col gap-4 items-center justify-center">
                     <div className="flex flex-row gap-4">
                         <button onClick={handleAddingNodes} className="px-4 py-2 bg-gray-500 rounded-md">+</button>
@@ -182,7 +238,7 @@ export default function Home() {
                             <div onClick={() => {
                                 if (edgeMode) selectNode(key.data)
                             }}>
-                                <Node DataValue={key.data}/>
+                                <Node color={visited[key.data] ? "red": "green"} DataValue={key.data}/>
                             </div>
                         </Draggable>
                     )
@@ -206,7 +262,16 @@ export default function Home() {
 
 //TODO:
 /**
- * 1. When deleting a node the edges stay printed, and it causes an error because the node is removed but the edges are still drawn so the data is messed up
- * 2. Issues with the edge count. It draws 2 edges per 1 connection
- * 3. Figure out how to do unit/integration testing.
+ * Implement DFS algorithm
+ *
+ * Make a separate component for each algorithm? How would I change the state of each node though?
+ *
+ * Make component (Call it DFS)
+ * Pass in the graph.
+ * In those components have their used data structures (queues, stacks, array) whatever
+ * Wait 2 sec every time a node is referenced and it make it a nice color
+ * When an algorithm starts, change the colors of all nodes to
+ * yellow (not visited)
+ * green (visited)
+ * red (failed to visit)
  */
