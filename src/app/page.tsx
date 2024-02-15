@@ -4,7 +4,7 @@ import Node from "./components/Node"
 import Edge from "./components/Edge"
 import Graph from "@/scripts/Graph"
 import GraphNode from "@/scripts/GraphNode";
-import React, {useState, useEffect} from "react";
+import React, {useRef, useState, useEffect} from "react";
 import Draggable from 'react-draggable'
 import getRandNodePosition from '@/utility/utility'
 import graphNode from "@/scripts/GraphNode";
@@ -24,7 +24,8 @@ export default function Home() {
     const [DFS_, setDFS] = useState(false);
     const [BFS_, setBFS] = useState(false);
     const [Dijkstra_, setDijkstra] = useState(false);
-    const [visited, setVisited] = useState<boolean[]>(new Array(myGraph.numNodes).fill(false))
+    const visitedRef = useRef(new Array(myGraph.numNodes).fill(false));
+    const [visitedState, setVisitedState] = useState<boolean[]>(new Array(myGraph.numNodes).fill(false))
     const algorithms = ["BFS", "DFS", "Dijkstra"]
 
 
@@ -45,41 +46,42 @@ export default function Home() {
     }
 
 
-    async function DFS(start: graphNode, visited: boolean[]) {
+    async function DFS(start: graphNode) {
 
-        const newVisited = [...visited];
-        newVisited[start.data] = true;
+        const visited = visitedRef.current;
+        visited[start.data] = true;
 
-        setVisited(newVisited)
+
+        setVisitedState([...visited])
 
         await new Promise(resolve => setTimeout(resolve, 1000))
 
         for (const vertex of myGraph.graph[start.data].neighbors) {
-            if (!newVisited[vertex.data]) {
-                await DFS(vertex, newVisited);
+            if (!visited[vertex.data]) {
+                await DFS(vertex);
             }
         }
     }
 
-    /*
-    ALLOW USER TO CHOOSE START NODE
-     */
-
-
+    function resetVisited() {
+        const resetArray = new Array(myGraph.numNodes).fill(false);
+        visitedRef.current = resetArray;
+        setVisitedState(resetArray);
+    }
     function handleAlgo(event: any) {
         event.preventDefault();
 
         if (event.target.value == "DFS") {
-            DFS(myGraph.graph[0], visited).then(r => {
-                console.log("RESET ARRAY")
-                setVisited(new Array(myGraph.numNodes).fill(false))
+            DFS(myGraph.graph[0]).then(r => {
+                console.log("RESET ARRAY");
+                resetVisited();
             })
         }
     }
 
     useEffect(() => {
-        console.log(visited)
-    }, [visited]);
+        console.log(visitedRef)
+    }, [visitedRef]);
 
 
     /**
@@ -238,7 +240,7 @@ export default function Home() {
                             <div onClick={() => {
                                 if (edgeMode) selectNode(key.data)
                             }}>
-                                <Node color={visited[key.data] ? "red": "green"} DataValue={key.data}/>
+                                <Node color={visitedState[key.data] ? "red": "green"} DataValue={key.data}/>
                             </div>
                         </Draggable>
                     )
