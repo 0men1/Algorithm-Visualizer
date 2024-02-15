@@ -27,6 +27,8 @@ export default function Home() {
     const [visitedState, setVisitedState] = useState<boolean[]>(new Array(myGraph.numNodes).fill(false))
     const algorithms = ["BFS", "DFS"]
 
+    const [toolbarToggle, setToolbarToggle] = useState(true);
+
 
     /* FOR EDGE MANIPULATION */const [edgeMode, setEdgeMode] = useState(false);const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
 
@@ -119,15 +121,25 @@ export default function Home() {
         event?.preventDefault()
 
         if (chosenAlgo == "DFS") {
+            setToolbarToggle(false);
+
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
             DFS(myGraph.graph[0]).then(r => {
                 resetVisited();
+                setToolbarToggle(true);
             })
             return;
         }
 
         if (chosenAlgo == "BFS") {
+            setToolbarToggle(false);
+
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
             BFS(myGraph.graph[0]).then(r => {
                 resetVisited();
+                setToolbarToggle(true);
             })
             return;
         }
@@ -227,7 +239,7 @@ export default function Home() {
                     {instructionText}
                 </div>
             }
-            {<div className={`toolbar bg-white p-10 flex gap-8 items-center justify-center`}>
+            {!toolbarToggle? <div></div>: <div id={"toolbar"} className={`toolbar bg-white p-10 flex gap-8 items-center justify-center`}>
 
                 {
                     <div className="flex-col justify-center items-center ">
