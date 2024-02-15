@@ -1,3 +1,18 @@
+I made this project because I was very bored and was interested on how backend can work with next.js. I learned a lot about what nextjs can do and I was very surprised the whole way down. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
